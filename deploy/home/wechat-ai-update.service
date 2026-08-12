@@ -1,0 +1,13 @@
+[Unit]
+Description=Pull and safely deploy the current WeChat-AI image
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=gene
+Group=gene
+WorkingDirectory=/opt/wechat-ai
+ExecStart=/opt/wechat-ai/deploy.sh
+
