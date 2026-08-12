@@ -1,7 +1,7 @@
 {
   "name": "wechat-ai",
   "private": true,
-  "version": "0.12.0",
+  "version": "0.12.1",
   "description": "Multi-user WeChat roleplay via iLink + Redis + LINUX DO OAuth",
   "packageManager": "pnpm@11.15.0",
   "scripts": {

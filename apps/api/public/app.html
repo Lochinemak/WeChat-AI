@@ -2764,7 +2764,7 @@
       </div>
       <div id="authRegisterPanel" style="display:none" role="tabpanel" aria-labelledby="authTabRegister">
         <form class="auth-form" id="registerForm" autocomplete="on">
-          <label>邀请码
+          <label id="registerInviteLabel">邀请码
             <div class="auth-field">
               <i class="bi bi-ticket-perforated field-icon" aria-hidden="true"></i>
               <input id="regInvite" name="invite" autocomplete="off" required maxlength="32" placeholder="好友分享的邀请码" spellcheck="false" autocapitalize="characters" enterkeyhint="next" />
@@ -3930,6 +3930,19 @@
       try {
         const cfg = await api("/api/v1/auth/config");
         if (cfg) {
+          const inviteRequired = cfg.inviteRequiredForLocal !== false;
+          const inviteInput = $("regInvite");
+          const inviteLabel = $("registerInviteLabel");
+          const registerForm = $("registerForm");
+          if (inviteInput) inviteInput.required = inviteRequired;
+          if (inviteLabel) inviteLabel.style.display = inviteRequired ? "" : "none";
+          if (registerForm) {
+            registerForm.dataset.inviteRequired = inviteRequired ? "1" : "0";
+          }
+          if (cfg.bootstrapRegistration && $("loginGateSub")) {
+            $("loginGateSub").textContent =
+              "创建首个账号，无需邀请码；该账号将自动成为管理员。";
+          }
           if (cfg.localAuthEnabled === false) {
             setAuthTab("login");
             if ($("authTabs")) $("authTabs").style.display = "none";
@@ -4053,7 +4066,7 @@
         const name = ($("regName")?.value || "").trim();
         const password = $("regPassword")?.value || "";
         const password2 = $("regPassword2")?.value || "";
-        if (!inviteCode) {
+        if (registerForm.dataset.inviteRequired !== "0" && !inviteCode) {
           showAuthError("请填写邀请码");
           return;
         }

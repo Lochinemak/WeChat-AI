@@ -646,11 +646,18 @@ export async function registerRoutes(
   app.get("/api/v1/auth/config", async (_req, reply) => {
     setPrivateNoStore(reply);
     const oauth = loadLinuxDoConfig();
+    const totalUsers = await countUsers(ctx.db);
+    const bootstrapRegistration =
+      totalUsers === 0 &&
+      ctx.cfg.firstUserIsAdmin &&
+      ctx.cfg.adminIds.size === 0;
     return {
       oauthEnabled: Boolean(oauth) && ctx.cfg.linuxdoAuthEnabled,
       provider: "linux.do",
       localAuthEnabled: ctx.cfg.localAuthEnabled,
-      inviteRequiredForLocal: ctx.cfg.inviteRequiredForLocal,
+      inviteRequiredForLocal:
+        ctx.cfg.inviteRequiredForLocal && !bootstrapRegistration,
+      bootstrapRegistration,
       passwordMinLength: ctx.cfg.passwordMinLength,
     };
   });
