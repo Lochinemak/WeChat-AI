@@ -1,0 +1,60 @@
+services:
+  redis:
+    image: redis:7.4-alpine
+    container_name: wechat-ai-redis
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --appendfsync
+      - everysec
+      - --requirepass
+      - ${REDIS_PASSWORD}
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    networks: [backend]
+
+  wechat-ai:
+    image: ${REGISTRY:-ghcr.91856478.xyz:8443}/${IMAGE_REPOSITORY:-lochinemak/wechat-ai}:${IMAGE_TAG:-edge}
+    container_name: wechat-ai
+    restart: unless-stopped
+    stop_grace_period: 30s
+    depends_on:
+      redis:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      WECHAT_AI_HOST: 0.0.0.0
+      WECHAT_AI_PORT: "8787"
+      NODE_ENV: production
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+    ports:
+      - "10.16.6.15:8787:8787"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:8787/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 8s
+      retries: 3
+      start_period: 50s
+    networks: [backend]
+
+networks:
+  backend:
+
+volumes:
+  redis-data:
+
