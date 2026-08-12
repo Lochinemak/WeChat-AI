@@ -39,6 +39,15 @@ import { loadLinuxDoConfig } from "./oauth-linuxdo.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+function redactRedisUrl(value: string): string {
+  try {
+    const url = new URL(value);
+    return `${url.protocol}//${url.host}${url.pathname}`;
+  } catch {
+    return "[invalid REDIS_URL]";
+  }
+}
+
 // The bot worker runs in this same process/event loop. A stray rejection from
 // any of its detached loops must not take the HTTP server down with it.
 process.on("unhandledRejection", (reason) => {
@@ -51,7 +60,7 @@ process.on("uncaughtException", (err) => {
 async function main(): Promise<void> {
   const cfg = loadConfig();
   console.log(`[config] repoRoot=${cfg.repoRoot}`);
-  console.log(`[config] redis=${cfg.redisUrl}`);
+  console.log(`[config] redis=${redactRedisUrl(cfg.redisUrl)}`);
   console.log(
     `[config] stickers=redis blob (max ${cfg.stickerMaxBytes} bytes)`,
   );
@@ -63,7 +72,7 @@ async function main(): Promise<void> {
   } catch (err) {
     console.error(
       "[redis] 无法连接 REDIS_URL，请检查远端 Redis：",
-      cfg.redisUrl,
+      redactRedisUrl(cfg.redisUrl),
       err,
     );
     process.exit(1);
